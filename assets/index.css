@@ -1,0 +1,219 @@
+/* Basic Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Video Background */
+.video-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    z-index: -1;
+}
+
+#background-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Overlay */
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: -1;
+}
+
+/* Container Styling */
+.container {
+    text-align: center;
+    color: white;
+    padding: 50px;
+    border-radius: 15px;
+    background-color: rgba(0, 0, 0, 0.7);
+    margin: 20px;
+}
+
+/* Content Styling */
+#title {
+    font-size: 3rem;
+    margin-bottom: 20px;
+    display: inline-block;
+    white-space: nowrap;
+    overflow: hidden;
+    border-right: 0.15em solid orange;
+    width: 0;
+    animation: typing 3.5s steps(40, end) forwards, blink-caret 0.75s step-end infinite;
+    line-height: 1.2; /* Adjust line height for better spacing */
+}
+
+@keyframes typing {
+    from { width: 0; }
+    to { width: 100%; }
+}
+
+@keyframes blink-caret {
+    from, to { border-color: transparent; }
+    50% { border-color: orange; }
+}
+
+.content p {
+    font-size: 1.2rem;
+    margin-bottom: 30px;
+    animation: fadeIn 2s ease 1s;
+}
+
+/* Button Styling */
+.cta-button {
+    text-decoration: none;
+    color: #ffffff;
+    background: #ff4b2b;
+    padding: 15px 30px;
+    border-radius: 50px;
+    font-size: 1.2rem;
+    transition: background 0.3s ease, transform 0.3s ease;
+    animation: fadeIn 2s ease 2s;
+}
+
+.cta-button:hover {
+    background: #ff416c;
+    transform: scale(1.1);
+}
+
+/* Why Choose Us Section */
+.why-choose-us {
+    margin-top: 50px;
+}
+
+.why-choose-us h2 {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+}
+
+.why-choose-us ul {
+    list-style-type: none;
+    font-size: 1.2rem;
+    text-align: left;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.why-choose-us ul li {
+    margin: 10px 0;
+    animation: fadeInUp 1s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Testimonials Section */
+.testimonials {
+    margin-top: 50px;
+    position: relative;
+}
+
+.testimonials h2 {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+}
+
+.testimonial-slideshow {
+    position: relative;
+    max-width: 100%;
+    margin: 0 auto;
+    overflow: hidden;
+    width: 70%;
+    
+}
+
+.testimonial-slide {
+    display: none;
+    text-align: center;
+    font-size: 1.2rem;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.testimonial-slide.active {
+    display: block;
+}
+
+.testimonial-slide img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    margin-bottom: 15px;
+}
+
+.testimonial-slide h4 {
+    margin-top: 15px;
+    font-weight: normal;
+    color: #f4f4f4;
+}
+
+/* Slideshow Controls */
+.slideshow-controls {
+    position: absolute;
+    top: 50%;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    transform: translateY(-50%);
+    padding: 0 20px;
+}
+
+.slideshow-controls span {
+    cursor: pointer;
+    font-size: 2rem;
+    color: white;
+    user-select: none;
+}
+
+/* Responsive Design */
+@media screen and (max-width: 768px) {
+    #title {
+        font-size: 2rem;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    #title {
+        font-size: 1.5rem;
+    }
+
+    .cta-button {
+        padding: 10px 20px;
+        font-size: 1rem;
+    }
+
+    .testimonial-slide img {
+        width: 60px;
+        height: 60px;
+    }
+
+    .testimonial-slide p {
+        font-size: 1rem;
+    }
+
+    .testimonial-slide h4 {
+        font-size: 0.9rem;
+    }
+}
