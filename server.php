@@ -1,18 +1,18 @@
-<?php 
-	session_start();
+<?php
 	
     
     $servername = "localhost";
     $username = "root";
     $password = "";
     $dbname = "registration";
+    $port ="3306";
     
     // Variable declaration
     $errors = array(); 
     $_SESSION['success'] = "";
     
     // Connect to database
-    $db = mysqli_connect($servername, $username, $password, $dbname,);
+    $db = mysqli_connect($servername, $username, $password, $dbname, 3306);
     
     // Check connection
     if (!$db) {
@@ -28,84 +28,89 @@
 
 
 
+
+ // Make sure this includes your $db = new mysqli(...) connection
+
+// REGISTER USER
 if (isset($_POST['reg_user'])) {
-    // Receive all input values from the form
-    
-    $affiliate_username = mysqli_real_escape_string($db, $_POST['affiliate_username']);
-    $email = mysqli_real_escape_string($db, $_POST['email']);
-    $password_1 = mysqli_real_escape_string($db, $_POST['password_1']);
-    $password_2 = mysqli_real_escape_string($db, $_POST['password_2']);
+    $username   = trim($_POST['username']);
+    $email      = trim($_POST['email']);
+    $password_1 = $_POST['password_1'];
+    $password_2 = $_POST['password_2'];
+    $role       = isset($_POST['role']) ? $_POST['role'] : 'affiliate';
 
-    // Form validation: ensure that the form is correctly filled
-    if (empty($affiliate_username)) { array_push($errors, "Username is required"); }
-    if (empty($email)) { array_push($errors, "Email is required"); }
-    if (empty($password_1)) { array_push($errors, "Password is required"); }
+    $errors = [];
 
-    // Check password requirements: length, letters, numbers, special characters
-    if (strlen($password_1) < 6) {
-        array_push($errors, "Password must be at least 6 characters long");
+    // Basic validation
+    if (empty($username)) array_push($errors, "Username is required");
+    if (empty($email))    array_push($errors, "Email is required");
+    if (empty($password_1)) array_push($errors, "Password is required");
+
+    // Check password strength
+    if (strtolower($password_1) === strtolower($username) || 
+        strpos(strtolower($password_1), strtolower(explode('@', $email)[0])) !== false) {
+        array_push($errors, "Password cannot contain your username or email name");
     }
-    if (!preg_match('/[A-Za-z]/', $password_1)) {
-        array_push($errors, "Password must contain at least one letter");
+
+    if (strlen($password_1) < 8) {
+        array_push($errors, "Password must be at least 8 characters");
+    }
+    if (!preg_match('/[A-Z]/', $password_1)) {
+        array_push($errors, "Password needs at least 1 uppercase letter");
+    }
+    if (!preg_match('/[a-z]/', $password_1)) {
+        array_push($errors, "Password needs at least 1 lowercase letter");
     }
     if (!preg_match('/[0-9]/', $password_1)) {
-        array_push($errors, "Password must contain at least one number");
+        array_push($errors, "Password needs at least 1 number");
     }
-    if (!preg_match('/[@$%]/', $password_1)) {
-        array_push($errors, "Password must contain at least one special character (@, $, %)");
-    }
-
-    if ($password_1 != $password_2) {
-        array_push($errors, "Passwords do not match");
+    if (!preg_match('/[\W_]/', $password_1)) {
+        array_push($errors, "Password needs at least 1 special character");
     }
 
-    // Check if username or email already exists
-    $user_check_query = "SELECT * FROM affiliates WHERE affiliate_username=? OR email=? LIMIT 1";
-    $stmt = $db->prepare($user_check_query);
-    $stmt->bind_param("ss", $affiliate_username, $email);
+    // Check for existing user
+    $stmt = $db->prepare("SELECT * FROM users WHERE username=? OR email=? LIMIT 1");
+    $stmt->bind_param("ss", $username, $email);
     $stmt->execute();
     $result = $stmt->get_result();
-    $user = $result->fetch_assoc();
-
-    if ($user) { // If user exists
-        if ($user['affiliate_username'] === $affiliate_username) {
-            array_push($errors, "Username is not available, someone already exist with this username");
+    if ($result && $result->num_rows > 0) {
+        $user = $result->fetch_assoc();
+        if ($user['username'] === $username) {
+            array_push($errors, "Username already exists");
         }
         if ($user['email'] === $email) {
-            array_push($errors, "User already exists with this email");
+            array_push($errors, "Email already registered");
         }
     }
 
-    // Register user if there are no errors in the form
-    if (count($errors) == 0) {
-        $password = md5($password_1); // Encrypt the password before saving in the database
+    // Proceed with registration if no errors
+    if (count($errors) === 0) {
+        $password_hash = password_hash($password_1, PASSWORD_BCRYPT);
 
-        // Prepare the SQL query using prepared statements
-        $stmt = $db->prepare("INSERT INTO affiliates (affiliate_username, email, password) VALUES (?, ?, ?)");
-        $stmt->bind_param("sss", $affiliate_username, $email, $password);
+        $stmt = $db->prepare("INSERT INTO users (username, email, password, role, registered_date) VALUES (?, ?, ?, ?, NOW())");
+        $stmt->bind_param("ssss", $username, $email, $password_hash, $role);
 
         if ($stmt->execute()) {
-            $_SESSION['success'] = "affiliate registered successfully!";
-            header('Location: login.php');
+            $_SESSION['username'] = $username;
+            $_SESSION['role'] = $role;
+            $_SESSION['success'] = "Registration successful!";
+
+           
+                header('Location: login.php');
+            
             exit();
         } else {
-            echo "Error: " . $stmt->error;
+            array_push($errors, "Database error: " . $stmt->error);
         }
-
-        // Close the statement and connection
-        $stmt->close();
-        $db->close();
     }
 
-    // Optionally, display errors if any
+    // If there were errors
     if (count($errors) > 0) {
-        foreach ($errors as $error) {
-           // echo "<p style='color: red;'>$error</p>";
-        }
+        $_SESSION['errors'] = $errors;
+        header('Location: register.php');
+        exit();
     }
 }
-
-
 
 	
 
@@ -115,112 +120,73 @@ if (isset($_POST['reg_user'])) {
 //////*****************LOGIN USER**********************************************************/
 //////*****************LOGIN USER**********************************************************/
 
+// Make sure this is at the VERY TOP of server.php (before any HTML output)
+
 // LOGIN USER
 if (isset($_POST['login_user'])) {
-    // Receive and sanitize input values from the form
-    $affiliate_username = mysqli_real_escape_string($db, $_POST['affiliate_username']);
-    $password = mysqli_real_escape_string($db, $_POST['password']);
+    // Initialize error array
+    $errors = [];
 
-    // Form validation: ensure that the form is correctly filled
-    if (empty($affiliate_username)) {
+    // Receive and sanitize input values
+    $username = trim(mysqli_real_escape_string($db, $_POST['username']));
+    $password = $_POST['password'];
+
+    // Form validation
+    if (empty($username)) {
         array_push($errors, "Username is required");
     }
     if (empty($password)) {
         array_push($errors, "Password is required");
+    } elseif (strlen($password) < 6) {
+        array_push($errors, "Password must be at least 6 characters");
     }
 
-    // Check if there are no errors in the form
+    // If no errors, proceed with login
     if (count($errors) == 0) {
-        // Encrypt the password
-        $password = md5($password);
+        $query = "SELECT * FROM users WHERE username = ? LIMIT 1";
+        $stmt = mysqli_prepare($db, $query);
+        mysqli_stmt_bind_param($stmt, "s", $username);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        $user = mysqli_fetch_assoc($result);
 
-        // Prepare and execute the query
-        $query = "SELECT * FROM affiliates WHERE affiliate_username='$affiliate_username' AND password='$password'";
-        $results = mysqli_query($db, $query);
+        if ($user) {
+            // Check if account is banned before verifying password
+            if (isset($user['account_status']) && $user['account_status'] === 'banned') {
+                array_push($errors, "Your account has been banned. Please contact support.");
+            } else {
+                if (password_verify($password, $user['password'])) {
+                    // Login successful - set session variables
+                    $_SESSION['user_id'] = $user['user_id'];
+                    $_SESSION['username'] = $user['username'];
+                    $_SESSION['role'] = $user['role'];
+                    $_SESSION['account_status'] = $user['account_status'] ?? 'active';
+                    $_SESSION['success'] = "You are now logged in";
+                    session_regenerate_id(true);
 
-        // Check if user exists
-        if (mysqli_num_rows($results) == 1) {
-            // Set session variables
-            $_SESSION['affiliate_username'] = $affiliate_username;
-            $_SESSION['success'] = "You are now logged in";
-
-            // Redirect to the affiliate registration page
-            header('Location: dashboard/affiliate/affdash.php'); // Ensure correct path to your affiliate registration page
-            exit(); // Ensure no further code is executed after redirection
+                    // Redirect based on role
+                    if ($user['role'] === 'vendor') {
+                        header('Location: dashboard/vendor_dashboard.php');
+                    } else {
+                        header('Location: dashboard/affdash.php');
+                    }
+                    exit();
+                } else {
+                    array_push($errors, "Invalid username or password combination");
+                }
+            }
         } else {
-            // If no user is found, add an error message
-            array_push($errors, "Invalid username or password");
+            array_push($errors, "Invalid username or password combination");
         }
+        mysqli_stmt_close($stmt);
     }
+
+    // Store errors in session and redirect back
+    $_SESSION['login_errors'] = $errors;
+    header('Location: login.php');
+    exit();
 }
-
-// Optionally, display errors if any
-if (count($errors) > 0) {
-    foreach ($errors as $error) {
-        //echo "<p style='color: red;'>$error</p>";
-    }
-}
-
-
-
-
-
 
 ///login vender   
 
 
-if (isset($_POST['login_vendor'])) {
-    // Receive and sanitize input values from the form
-    $vendor_username = mysqli_real_escape_string($db, $_POST['vendor_username']);
-    $password = mysqli_real_escape_string($db, $_POST['password']);
-
-    // Form validation: ensure that the form is correctly filled
-    if (empty($vendor_username)) {
-        array_push($errors, "Username is required");
-    }
-    if (empty($password)) {
-        array_push($errors, "Password is required");
-    }
-
-    // Check if there are no errors in the form
-    if (count($errors) == 0) {
-        // Prepare and execute the query to fetch the user data
-        $query = "SELECT * FROM vendors WHERE vendor_username=?";
-        $stmt = $db->prepare($query);
-        $stmt->bind_param("s", $vendor_username);
-        $stmt->execute();
-        $result = $stmt->get_result();
-
-        // Check if the user exists
-        if ($result->num_rows == 1) {
-            $user = $result->fetch_assoc();
-
-            // Verify the password using password_verify
-            if (password_verify($password, $user['password'])) {
-                // Set session variables
-                $_SESSION['vendor_username'] = $vendor_username;
-                $_SESSION['success'] = "You are now logged in";
-
-                // Redirect to the vendor dashboard page
-                header('Location: dashboard/vender/vendor_dashboard.php'); // Ensure the correct path to your vendor dashboard page
-                exit(); // Ensure no further code is executed after redirection
-            } else {
-                // If the password is incorrect, add an error message
-                array_push($errors, "Invalid username or password");
-            }
-        } else {
-            // If no user is found, add an error message
-            array_push($errors, "Invalid username or password");
-        }
-
-        $stmt->close();
-    }
-}
-
-// Optionally, display errors if any
-if (count($errors) > 0) {
-    foreach ($errors as $error) {
-        echo "<p style='color: red;'>$error</p>";
-    }
-}
-?>

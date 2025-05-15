@@ -6,10 +6,10 @@ include 'success.php';
 $servername = "localhost";
 $username = "root";
 $password = "";
-$dbname = "registration"; // Replace with your actual database name
+$dbname = "registration";
 
-// Create connection
-$conn = new mysqli($servername, $username, $password, $dbname, );
+// Create connection (removed trailing comma)
+$conn = new mysqli($servername, $username, $password, $dbname);
 
 // Check connection
 if ($conn->connect_error) {
@@ -17,35 +17,51 @@ if ($conn->connect_error) {
 }
 
 // Handle approval or rejection
-if (isset($_GET['action']) && isset($_GET['affiliate_id'])) {
+if (isset($_GET['action']) && isset($_GET['user_id'])) {
     $action = $_GET['action'];
-    $affiliate_id = intval($_GET['affiliate_id']);
+    $user_id = intval($_GET['user_id']); // Fixed variable name from affiliate_id to user_id
 
     if ($action == 'deactivate') {
-        // Update product status to approved
-        $update_query = "UPDATE affiliates SET account_status='deactivate' WHERE affiliate_id=$affiliate_id";
+        $update_query = "UPDATE users SET account_status='deactivate' WHERE user_id=$user_id";
+        
+    } elseif ($action == 'suspend') {
+        $update_query = "UPDATE users SET account_status='suspend' WHERE user_id=$user_id";
+
     } elseif ($action == 'ban') {
-        // Update product status to rejected
-        $update_query = "UPDATE affiliates SET account_status='Banned' WHERE affiliate_id=$affiliate_id";
+        $update_query = "UPDATE users SET account_status='Banned' WHERE user_id=$user_id";
     }
 
     if (isset($update_query) && $conn->query($update_query) === TRUE) {
-        $_SESSION['success'] = "payout status updated successfully.";
+        $_SESSION['success'] = "Account status updated successfully.";
     } else {
-        $_SESSION['error'] = "Error updating product status: " . $conn->error;
+        $_SESSION['error'] = "Error updating account status: " . $conn->error;
     }
 
-    // Redirect back to the manage products page to prevent form resubmission
     header('Location: manage_affiliates.php');
     exit();
 }
 
-
-$sql = "SELECT affiliate_id,affiliate_username, payment_method, bank_country, country_of_residence, bank_name, phone_number, account_number, account_name, incoming_payout ,account_status
-        FROM affiliates";
+// Modified query to combine firstname and lastname as full_name
+$sql = "SELECT 
+            user_id,
+            CONCAT(first_name, ' ', last_name) AS full_name,
+            username, 
+            payment_method, 
+            bank_country, 
+            country_of_residence, 
+            bank_name, 
+            phone_number, 
+            account_number, 
+            account_name, 
+            incoming_payout,
+            account_status
+        FROM users";
 
 // Execute the query
-$result = $conn->query($sql)
+$result = $conn->query($sql);
+
+// Close connection (recommended)
+$conn->close();
 ?>
 
 <!DOCTYPE html>
@@ -58,6 +74,11 @@ $result = $conn->query($sql)
     <!--<link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">-->
 
 <style>
+
+    .suspend {
+    background-color: #ffc107;
+    color: white;
+}
 /* General container styles */
 .container {
     margin-top: 20px;
@@ -68,7 +89,7 @@ $result = $conn->query($sql)
 
 /* General table styles */
 .table {
-    width: 100%;
+    width: 300%;
     border-collapse: collapse;
     font-family: Arial, sans-serif;
     margin-top: 20px;
@@ -170,6 +191,8 @@ $result = $conn->query($sql)
         text-transform: uppercase;
     }
 }
+
+  
 </style>
 </head>
 <body>
@@ -217,21 +240,24 @@ $result = $conn->query($sql)
                 <?php if ($result->num_rows > 0): ?>
                     <?php while($row = $result->fetch_assoc()): ?>
                         <tr>
-                            <td><?php echo $row['affiliate_id']; ?></td>
-                            <td><?php echo $row['affiliate_username']; ?></td>
+                            <td><?php echo $row['user_id']; ?></td>
+                            <td><?php echo $row['username']; ?></td>
                             <td><?php echo $row['payment_method']; ?></td>
                             <td><?php echo $row['bank_country']; ?></td>
                             <td><?php echo $row['country_of_residence']; ?></td>
                             <td><?php echo $row['bank_name']; ?></td>
-                            
+                            <td><?php echo $row['full_name']; ?></td>
                             <td><?php echo $row['account_number']; ?></td>
                             <td><?php echo $row['account_name']; ?></td>
                             <td>$<?php echo $row['incoming_payout']; ?></td>
                             <td><?php echo $row['account_status']; ?></td>
                             <td>
                                 <!-- Ensure the URLs are correct, using relative or absolute paths -->
-                                <a href="manage_affiliates.php?action=deactivate&affiliate_id=<?php echo $row['affiliate_id']; ?>" class="btn btn-success btn-sm">Deactivate</a>
-                                <a href="manage_affiliates.php?action=ban&affiliate_id=<?php echo $row['affiliate_id']; ?>" class="btn btn-danger btn-sm">Ban</a>
+                                <a href="manage_affiliates.php?action=deactivate&user_id=<?php echo $row['user_id']; ?>" class="btn btn-success btn-sm">Deactivate</a>
+                                
+                                <a href="manage_affiliates.php?action=ban&user_id=<?php echo $row['user_id']; ?>" class="btn btn-danger btn-sm">Ban</a>
+                                <a href="manage_affiliates.php?action=suspend&user_id=<?php echo $row['user_id']; ?>" class="suspend">Suspend</a>
+                            </td>
                             </td>
                         </tr>
                     <?php endwhile; ?>
@@ -252,7 +278,3 @@ $result = $conn->query($sql)
 </body>
 </html>
 
-<?php
-// Close the connection
-$conn->close();
-?>

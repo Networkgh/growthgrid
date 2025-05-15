@@ -1,7 +1,17 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
 <?php include('server.php') ?>
-
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,12 +19,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Growth Grid 26 - Register</title>
     <link rel="stylesheet" href="style.css">
-
-
     <style>
-
-
-body {
+       body {
     margin: 0;
     font-family: Arial, sans-serif;
     background-color: #f0f2f5;
@@ -225,12 +231,42 @@ body {
 	text-align: left;
 }
 
+        .password-strength-meter {
+            height: 5px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            margin-bottom: 3px;
+            overflow: hidden;
+        }
+
+        #password-strength-bar {
+            height: 100%;
+            width: 0;
+            transition: width 0.3s ease, background 0.3s ease;
+        }
+
+        .password-feedback {
+            font-size: 0.8rem;
+            min-height: 1rem;
+        }
+
+        /* Strength level colors */
+        .strength-0 { background: #ff4757; width: 20%; } /* Very Weak */
+        .strength-1 { background: #ff6348; width: 40%; } /* Weak */
+        .strength-2 { background: #ffa502; width: 60%; } /* Moderate */
+        .strength-3 { background: #2ed573; width: 80%; } /* Strong */
+        .strength-4 { background: #2ed573; width: 100%; } /* Very Strong */
+
+        /* Feedback text colors */
+        .feedback-weak { color: #ff4757; }
+        .feedback-moderate { color: #ffa502; }
+        .feedback-strong { color: #2ed573; }
     </style>
 </head>
 <body>
     <div class="container-split">
-        <!-- Left Section: Content -->
-        <div class="left-section">
+        <!-- Left Section: Content (unchanged) -->
+<div class="left-section">
             <div class="content">
                 <h1 id="typing-text"></h1>
                 <p>You are now only a few clicks away from unlocking your own home-based business.</p>
@@ -261,81 +297,192 @@ body {
             </div>
         </div>
 
+
         <!-- Right Section: Registration Form -->
         <div class="right-section">
             <div class="form-container">
-                <h2>Create Account As Affiliate</h2>
+                <h2>Create Account</h2>
                 <p>Already have an Account? <a href="login.php">Sign In</a></p>
                 <form method="post" action="register.php">
-				<?php include('errors.php'); ?>
-				<section id="registration-form">
+                    <?php include('errors.php'); ?>
                     <div class="form-group">
-                        <label for="affiliate_username">Username</label>
-                        <input type="text" id="affiliate_username" name="affiliate_username"   required   >
+                        <label>Account Type</label>
+                        <div style="display: flex; gap: 20px; margin-top: 10px;">
+                            <label style="display: flex; align-items: center;">
+                                <input type="radio" name="role" value="affiliate" checked style="margin-right: 5px;">
+                                Affiliate
+                            </label>
+                            <label style="display: flex; align-items: center;">
+                                <input type="radio" name="role" value="vendor" style="margin-right: 5px;">
+                                Vendor
+                            </label>
+                        </div>
                     </div>
                     
-					
-
-                     <div class="form-group">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" required>
+                    </div>
+                    
+                    <div class="form-group">
                         <label for="email">Email Address</label>
-                        <input type="email" id="email" name="email" required> 
-
+                        <input type="email" id="email" name="email" required>
                     </div>
 
                     <div class="form-group">
-      	            <label>Password</label>
-      	             <input type="password" name="password_1">
-      	           </div> 
+                        <label for="password_1">Password</label>
+                        <input type="password" id="password_1" name="password_1" required 
+                               oninput="checkPasswordStrength()">
+                        <div class="password-strength-container">
+                            <div class="password-strength-meter">
+                                <div id="password-strength-bar"></div>
+                            </div>
+                            <div id="password-feedback" class="password-feedback"></div>
+                        </div>
+                    </div>
 
-                     <div class="form-group">
-      	            <label>Confirm password</label>
-      	             <input type="password" name="password_2">
-      	           </div> 
+                    <div class="form-group">
+                        <label for="password_2">Confirm password</label>
+                        <input type="password" id="password_2" name="password_2" required
+                               oninput="checkPasswordMatch()">
+                        <div id="password-match-feedback" class="password-feedback"></div>
+                    </div>
 
-                    
-                     <p>Do you  have your own product to sell? <a href="vender.php">Clich here</a></p>
-
-                    <button type="submit" class="cta-button" name="reg_user">Create my free Account</button>
+                    <button type="submit" class="cta-button" name="reg_user" id="submit-btn">Create Account</button>
                 </form>
-              </section>
             </div>
         </div>
     </div>
 
     <script>
-		document.addEventListener("DOMContentLoaded", function () {
-    // Typing Effect
-    const text = "Your Internet Income Journey Starts Here";
-    let index = 0;
-    const speed = 100; // Adjust typing speed (milliseconds)
+        // Typing Effect (unchanged)
+        document.addEventListener("DOMContentLoaded", function () {
+            const text = "Your Internet Income Journey Starts Here";
+            let index = 0;
+            const speed = 100;
 
-    function typeEffect() {
-        if (index < text.length) {
-            document.getElementById("typing-text").innerHTML += text.charAt(index);
-            index++;
-            setTimeout(typeEffect, speed);
+            function typeEffect() {
+                if (index < text.length) {
+                    document.getElementById("typing-text").innerHTML += text.charAt(index);
+                    index++;
+                    setTimeout(typeEffect, speed);
+                }
+            }
+            typeEffect();
+
+            // Testimonial Slideshow (unchanged)
+            let slideIndex = 0;
+            const slides = document.getElementsByClassName("testimonial-slide");
+            function showSlides() {
+                for (let i = 0; i < slides.length; i++) {
+                    slides[i].classList.remove("active");
+                }
+                slideIndex++;
+                if (slideIndex > slides.length) { slideIndex = 1; }
+                slides[slideIndex - 1].classList.add("active");
+                setTimeout(showSlides, 4000);
+            }
+            showSlides();
+        });
+        </script>
+    <script>
+        // Password Strength Checker
+        function checkPasswordStrength() {
+            const password = document.getElementById('password_1').value;
+            const strengthBar = document.getElementById('password-strength-bar');
+            const feedback = document.getElementById('password-feedback');
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
+            
+            // Reset
+            strengthBar.className = '';
+            feedback.textContent = '';
+            feedback.className = 'password-feedback';
+            
+            // Check if empty
+            if (password.length === 0) {
+                return;
+            }
+            
+            // Check if password contains username or email
+            const emailPrefix = email.split('@')[0].toLowerCase();
+            if (password.toLowerCase().includes(username.toLowerCase()) || 
+                password.toLowerCase().includes(emailPrefix)) {
+                strengthBar.className = 'strength-0';
+                feedback.textContent = '✖ Password should not contain your username or email';
+                feedback.classList.add('feedback-weak');
+                return;
+            }
+            
+            // Calculate strength score (0-4)
+            let strength = 0;
+            
+            // Length (max 2 points)
+            if (password.length >= 8) strength += 1;
+            if (password.length >= 12) strength += 1;
+            
+            // Character diversity (max 3 points)
+            if (/[A-Z]/.test(password)) strength += 1; // Uppercase
+            if (/[0-9]/.test(password)) strength += 1; // Numbers
+            if (/[\W_]/.test(password)) strength += 1; // Special chars
+            
+            // Cap at 4 (our max strength level)
+            strength = Math.min(strength, 4);
+            
+            // Visual feedback
+            strengthBar.className = 'strength-' + strength;
+            
+            // Text feedback
+            const messages = [
+                'Very Weak - Add more characters and complexity',
+                'Weak - Try adding numbers or special characters',
+                'Moderate - Could be stronger',
+                'Strong - Good password!',
+                'Very Strong - Excellent password!'
+            ];
+            
+            const messageClasses = [
+                'feedback-weak',
+                'feedback-weak',
+                'feedback-moderate',
+                'feedback-strong',
+                'feedback-strong'
+            ];
+            
+            feedback.textContent = messages[strength];
+            feedback.classList.add(messageClasses[strength]);
+            
+            // Update confirm password check
+            checkPasswordMatch();
         }
-    }
-
-    typeEffect();
-
-    // Testimonial Slideshow
-    let slideIndex = 0;
-    const slides = document.getElementsByClassName("testimonial-slide");
-
-    function showSlides() {
-        for (let i = 0; i < slides.length; i++) {
-            slides[i].classList.remove("active");
+        
+        // Password Match Checker
+        function checkPasswordMatch() {
+            const password1 = document.getElementById('password_1').value;
+            const password2 = document.getElementById('password_2').value;
+            const feedback = document.getElementById('password-match-feedback');
+            const submitBtn = document.getElementById('submit-btn');
+            
+            if (password2.length === 0) {
+                feedback.textContent = '';
+                return;
+            }
+            
+            if (password1 !== password2) {
+                feedback.textContent = '✖ Passwords do not match';
+                feedback.className = 'password-feedback feedback-weak';
+                submitBtn.disabled = true;
+                submitBtn.style.opacity = '0.7';
+            } else {
+                feedback.textContent = '✔ Passwords match';
+                feedback.className = 'password-feedback feedback-strong';
+                submitBtn.disabled = false;
+                submitBtn.style.opacity = '1';
+            }
         }
-        slideIndex++;
-        if (slideIndex > slides.length) { slideIndex = 1; }
-        slides[slideIndex - 1].classList.add("active");
-        setTimeout(showSlides, 4000); // Change slide every 4 seconds
-    }
+    </script>
+    
 
-    showSlides();
-});
 
-	</script>
 </body>
 </html>
