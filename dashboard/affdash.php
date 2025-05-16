@@ -18,7 +18,40 @@ include 'includes/earnings.php';
 include 'includes/ads.php';
 
 
+
+
+// Database connection
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "registration";
+
+$db = new mysqli($servername, $username, $password, $dbname);
+if ($db->connect_error) {
+    die("Connection failed: " . $db->connect_error);
+}
+
+// Fetch payout records for the logged-in user
+$payouts = [];
+$query = "SELECT payout_id, amount AS payout_amount, request_date AS payout_date, status AS payout_status 
+          FROM payouts 
+          WHERE user_id = ? 
+          ORDER BY request_date DESC";
+
+$stmt = $db->prepare($query);
+$stmt->bind_param("i", $_SESSION['user_id']);
+$stmt->execute();
+$result = $stmt->get_result();
+
+while ($row = $result->fetch_assoc()) {
+    $payouts[] = $row;
+}
+
+$stmt->close();
+$db->close();
 ?>
+
+
 
 
 

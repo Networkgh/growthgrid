@@ -104,12 +104,9 @@ if (isset($_POST['reg_user'])) {
         }
     }
 
-    // If there were errors
-    if (count($errors) > 0) {
-        $_SESSION['errors'] = $errors;
-        header('Location: register.php');
-        exit();
-    }
+      $_SESSION['login_errors'] = $errors;
+    header('Location: register.php');
+    exit();
 }
 
 	

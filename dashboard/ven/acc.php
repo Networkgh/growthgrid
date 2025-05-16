@@ -2,6 +2,21 @@
 session_start();
 
 // Initialize all user data variables with default values
+$userData = [
+    'username' => '',
+    'first_name' => '',
+    'last_name' => '',
+    'full_name' => '',
+    'email' => '',
+    'telephone' => '',
+    'country_of_residence' => '',
+    'payment_method' => '',
+    'bank_country' => '',
+    'bank_name' => '',
+    'account_number' => '',
+    'account_name' => ''
+];
+
 // Enhanced session validation
 if (!isset($_SESSION['username'])) {
     error_log("Session username not set. Redirecting to login.");
@@ -88,23 +103,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     } else {
         $_SESSION['error'] = implode("<br>", $errors);
     }
+    
+    header("Location: account_settings.php");
+    exit;
 }
-
-
-$userData = [
-    'username' => '',
-    'first_name' => '',
-    'last_name' => '',
-    'full_name' => '',
-    'email' => '',
-    'telephone' => '',
-    'country_of_residence' => '',
-    'payment_method' => '',
-    'bank_country' => '',
-    'bank_name' => '',
-    'account_number' => '',
-    'account_name' => ''
-];
 
 // Fetch user data with enhanced error handling
 $query = "SELECT username, first_name, last_name, email, phone_number, country_of_residence, 

@@ -8,7 +8,7 @@ $username = "root";
 $password = "";
 $dbname = "registration";
 
-// Create connection (removed trailing comma)
+// Create connection
 $conn = new mysqli($servername, $username, $password, $dbname);
 
 // Check connection
@@ -16,25 +16,49 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// Handle approval or rejection
+// Handle account status changes
 if (isset($_GET['action']) && isset($_GET['user_id'])) {
     $action = $_GET['action'];
-    $user_id = intval($_GET['user_id']); // Fixed variable name from affiliate_id to user_id
+    $user_id = intval($_GET['user_id']);
+    $new_status = '';
+    $success_message = '';
 
-    if ($action == 'deactivate') {
-        $update_query = "UPDATE users SET account_status='deactivate' WHERE user_id=$user_id";
-        
-    } elseif ($action == 'suspend') {
-        $update_query = "UPDATE users SET account_status='suspend' WHERE user_id=$user_id";
-
-    } elseif ($action == 'ban') {
-        $update_query = "UPDATE users SET account_status='Banned' WHERE user_id=$user_id";
+    // Determine the new status based on action
+    switch ($action) {
+        case 'ban':
+            $new_status = 'Banned';
+            $success_message = "Account banned successfully.";
+            break;
+        case 'unban':
+            $new_status = 'Active';
+            $success_message = "Account unbanned successfully.";
+            break;
+        case 'suspend':
+            $new_status = 'Suspended';
+            $success_message = "Account suspended successfully.";
+            break;
+        case 'unsuspend':
+            $new_status = 'Active';
+            $success_message = "Account unsuspended successfully.";
+            break;
+        case 'deactivate':
+            $new_status = 'Deactivated';
+            $success_message = "Account deactivated successfully.";
+            break;
+        case 'activate':
+            $new_status = 'Active';
+            $success_message = "Account activated successfully.";
+            break;
     }
 
-    if (isset($update_query) && $conn->query($update_query) === TRUE) {
-        $_SESSION['success'] = "Account status updated successfully.";
-    } else {
-        $_SESSION['error'] = "Error updating account status: " . $conn->error;
+    if (!empty($new_status)) {
+        $update_query = "UPDATE users SET account_status='$new_status' WHERE user_id=$user_id";
+        
+        if ($conn->query($update_query) === TRUE) {
+            $_SESSION['success'] = $success_message;
+        } else {
+            $_SESSION['error'] = "Error updating account status: " . $conn->error;
+        }
     }
 
     header('Location: manage_affiliates.php');
@@ -60,7 +84,7 @@ $sql = "SELECT
 // Execute the query
 $result = $conn->query($sql);
 
-// Close connection (recommended)
+// Close connection
 $conn->close();
 ?>
 
@@ -70,130 +94,142 @@ $conn->close();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Affiliate</title>
-    <!-- Bootstrap CSS -->
-    <!--<link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">-->
+    <style>
+        .suspend {
+            background-color: #ffc107;
+            color: white;
+        }
+        
+        .unsuspend {
+            background-color: #17a2b8;
+            color: white;
+        }
+        
+        .ban {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .unban {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .deactivate {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .activate {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        /* General container styles */
+        .container {
+            margin-top: 20px;
+            padding: 20px;
+            max-width: 100%;
+            overflow-x: auto;
+        }
 
-<style>
+        /* General table styles */
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: Arial, sans-serif;
+            margin-top: 20px;
+        }
 
-    .suspend {
-    background-color: #ffc107;
-    color: white;
-}
-/* General container styles */
-.container {
-    margin-top: 20px;
-    padding: 20px;
-    max-width: 100%;
-    overflow-x: auto; /* Enable horizontal scrolling */
-}
+        .table thead {
+            background-color: #007bff;
+            color: white;
+            text-align: left;
+        }
 
-/* General table styles */
-.table {
-    width: 300%;
-    border-collapse: collapse;
-    font-family: Arial, sans-serif;
-    margin-top: 20px;
-}
+        .table th, .table td {
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+        }
 
-.table thead {
-    background-color: #007bff;
-    color: white;
-    text-align: left;
-}
+        .table tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
 
-.table th, .table td {
-    padding: 12px 15px;
-    border: 1px solid #ddd;
-}
+        /* Hover effect for table rows */
+        .table tbody tr:hover {
+            background-color: #f1f1f1;
+        }
 
-.table tbody tr:nth-child(even) {
-    background-color: #f9f9f9;
-}
+        /* Header cell styling */
+        .table th {
+            text-transform: uppercase;
+            font-weight: 600;
+        }
 
-/* Hover effect for table rows */
-.table tbody tr:hover {
-    background-color: #f1f1f1;
-}
+        /* Action buttons styling */
+        .table a.btn {
+            padding: 5px 10px;
+            font-size: 12px;
+            text-transform: uppercase;
+            border-radius: 5px;
+            text-decoration: none;
+            margin-right: 5px;
+            display: inline-block;
+            margin-bottom: 5px;
+        }
 
-/* Header cell styling */
-.table th {
-    text-transform: uppercase;
-    font-weight: 600;
-}
+        .table a.btn-sm {
+            padding: 5px 15px;
+        }
 
-/* Action buttons styling */
-.table a.btn {
-    padding: 5px 10px;
-    font-size: 12px;
-    text-transform: uppercase;
-    border-radius: 5px;
-    text-decoration: none;
-    margin-right: 5px;
-}
+        /* Add hover effects for buttons */
+        .table a.btn:hover {
+            opacity: 0.8;
+        }
 
-.table a.btn-sm {
-    padding: 5px 15px;
-}
+        /* Optional: Styling for "No affiliate found" */
+        .table td.text-center {
+            text-align: center;
+            color: #6c757d;
+            font-weight: bold;
+        }
 
-.table a.btn-success {
-    background-color: #28a745;
-    color: white;
-}
-
-.table a.btn-danger {
-    background-color: #dc3545;
-    color: white;
-}
-
-/* Add hover effects for buttons */
-.table a.btn:hover {
-    opacity: 0.8;
-}
-
-/* Optional: Styling for "No affiliate found" */
-.table td.text-center {
-    text-align: center;
-    color: #6c757d;
-    font-weight: bold;
-}
-
-/* Responsive design for mobile devices */
-@media (max-width: 768px) {
-    .table, .table thead, .table tbody, .table th, .table td, .table tr {
-        display: block;
-        width: 100%;
-    }
-    .table tr {
-        margin-bottom: 10px;
-        display: block;
-    }
-    .table th {
-        position: relative;
-        padding-left: 50%;
-        white-space: nowrap;
-    }
-    .table th::before {
-        content: attr(data-label);
-        position: absolute;
-        left: 15px;
-        font-weight: bold;
-        text-transform: uppercase;
-    }
-    .table td {
-        position: relative;
-        padding-left: 50%;
-    }
-    .table td::before {
-        content: attr(data-label);
-        position: absolute;
-        left: 15px;
-        font-weight: bold;
-        text-transform: uppercase;
-    }
-}
-
-  
-</style>
+        /* Responsive design for mobile devices */
+        @media (max-width: 768px) {
+            .table, .table thead, .table tbody, .table th, .table td, .table tr {
+                display: block;
+                width: 100%;
+            }
+            .table tr {
+                margin-bottom: 10px;
+                display: block;
+            }
+            .table th {
+                position: relative;
+                padding-left: 50%;
+                white-space: nowrap;
+            }
+            .table th::before {
+                content: attr(data-label);
+                position: absolute;
+                left: 15px;
+                font-weight: bold;
+                text-transform: uppercase;
+            }
+            .table td {
+                position: relative;
+                padding-left: 50%;
+            }
+            .table td::before {
+                content: attr(data-label);
+                position: absolute;
+                left: 15px;
+                font-weight: bold;
+                text-transform: uppercase;
+            }
+        }
+    </style>
 </head>
 <body>
 <div class="container mt-5">
@@ -252,12 +288,23 @@ $conn->close();
                             <td>$<?php echo $row['incoming_payout']; ?></td>
                             <td><?php echo $row['account_status']; ?></td>
                             <td>
-                                <!-- Ensure the URLs are correct, using relative or absolute paths -->
-                                <a href="manage_affiliates.php?action=deactivate&user_id=<?php echo $row['user_id']; ?>" class="btn btn-success btn-sm">Deactivate</a>
+                                <?php if ($row['account_status'] == 'Deactivated'): ?>
+                                    <a href="manage_affiliates.php?action=activate&user_id=<?php echo $row['user_id']; ?>" class="btn activate">Activate</a>
+                                <?php else: ?>
+                                    <a href="manage_affiliates.php?action=deactivate&user_id=<?php echo $row['user_id']; ?>" class="btn deactivate">Deactivate</a>
+                                <?php endif; ?>
                                 
-                                <a href="manage_affiliates.php?action=ban&user_id=<?php echo $row['user_id']; ?>" class="btn btn-danger btn-sm">Ban</a>
-                                <a href="manage_affiliates.php?action=suspend&user_id=<?php echo $row['user_id']; ?>" class="suspend">Suspend</a>
-                            </td>
+                                <?php if ($row['account_status'] == 'Banned'): ?>
+                                    <a href="manage_affiliates.php?action=unban&user_id=<?php echo $row['user_id']; ?>" class="btn unban">Unban</a>
+                                <?php else: ?>
+                                    <a href="manage_affiliates.php?action=ban&user_id=<?php echo $row['user_id']; ?>" class="btn ban">Ban</a>
+                                <?php endif; ?>
+                                
+                                <?php if ($row['account_status'] == 'Suspended'): ?>
+                                    <a href="manage_affiliates.php?action=unsuspend&user_id=<?php echo $row['user_id']; ?>" class="btn unsuspend">Unsuspend</a>
+                                <?php else: ?>
+                                    <a href="manage_affiliates.php?action=suspend&user_id=<?php echo $row['user_id']; ?>" class="btn suspend">Suspend</a>
+                                <?php endif; ?>
                             </td>
                         </tr>
                     <?php endwhile; ?>
@@ -270,11 +317,5 @@ $conn->close();
         </table>
     </div>
 </div>
-
-<!-- Bootstrap JS and dependencies -->
-<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>
-

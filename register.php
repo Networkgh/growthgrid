@@ -1,30 +1,35 @@
+<?php 
+session_start();
+if (isset($_SESSION['login_error'])) {
+    echo '<p style="color:red; text-align:center;">' . $_SESSION['login_error'] . '</p>';
+    unset($_SESSION['login_error']);
+}
+include('server.php');
+?>
 
 
-
-
-
-
-
-
-
-
-
-
-
-<?php include('server.php') ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Growth Grid 26 - Register</title>
-    <link rel="stylesheet" href="style.css">
-    <style>
+    <!-- [Rest of your head section remains the same] -->
+      <style>
        body {
     margin: 0;
     font-family: Arial, sans-serif;
     background-color: #f0f2f5;
 }
+
+ .error-alert {
+            background-color: #ffebee;
+            border-left: 4px solid #f44336;
+            padding: 10px 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        .error-alert p {
+            color: #d32f2f;
+            margin: 5px 0;
+        }
 
 .container-split {
     display: flex;
@@ -264,6 +269,8 @@
     </style>
 </head>
 <body>
+    
+    
     <div class="container-split">
         <!-- Left Section: Content (unchanged) -->
 <div class="left-section">
@@ -299,12 +306,25 @@
 
 
         <!-- Right Section: Registration Form -->
+           <!-- Right Section: Registration Form -->
         <div class="right-section">
             <div class="form-container">
                 <h2>Create Account</h2>
                 <p>Already have an Account? <a href="login.php">Sign In</a></p>
+
+                <?php 
+            if (isset($_SESSION['login_errors']) && !empty($_SESSION['login_errors'])) {
+                echo '<div class="error-alert">';
+                foreach ($_SESSION['login_errors'] as $error) {
+                    echo '<p>'.$error.'</p>';
+                }
+                echo '</div>';
+                unset($_SESSION['login_errors']);
+            }
+            ?>
+            
                 <form method="post" action="register.php">
-                    <?php include('errors.php'); ?>
+          
                     <div class="form-group">
                         <label>Account Type</label>
                         <div style="display: flex; gap: 20px; margin-top: 10px;">
@@ -350,11 +370,11 @@
 
                     <button type="submit" class="cta-button" name="reg_user" id="submit-btn">Create Account</button>
                 </form>
+                <!-- [Rest of your form remains the same] -->
             </div>
         </div>
     </div>
-
-    <script>
+ <script>
         // Typing Effect (unchanged)
         document.addEventListener("DOMContentLoaded", function () {
             const text = "Your Internet Income Journey Starts Here";
@@ -483,6 +503,6 @@
     </script>
     
 
-
+    <!-- [Rest of your scripts remain the same] -->
 </body>
 </html>

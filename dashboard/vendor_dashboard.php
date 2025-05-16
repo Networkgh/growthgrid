@@ -1,28 +1,48 @@
- <?php
+<?php
 session_start();
 
-
+// Check if user is logged in
 if (!isset($_SESSION['username'])) {
     echo "Unauthorized access. Please log in.";
     exit();
 }
-// Include necessary files
+
+// Include necessary UI components
 include 'includes/vender-navbar.php';
 include 'includes/earnings.php';
 include 'payout.php';
-
 include 'includes/user-count.php';
 
+// Database connection
+$servername = "localhost";
+$db_username = "root";
+$db_password = "";
+$dbname = "registration";
 
+$conn = new mysqli($servername, $db_username, $db_password, $dbname);
 
+// Check connection
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
 
+// Get username from session
+$username = $_SESSION['username'];
+
+// Count number of products for this user
+$stmt = $conn->prepare("SELECT COUNT(*) AS product_count FROM products WHERE username = ?");
+$stmt->bind_param("s", $username);
+$stmt->execute();
+$result = $stmt->get_result();
+$row = $result->fetch_assoc();
+
+$product_count = $row['product_count'];
+
+$stmt->close();
+$conn->close();
 ?>
-<?php
-// Rest of your dashboard code
-include 'includes/user-count.php';
 
 
-?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -260,7 +280,7 @@ include 'includes/user-count.php';
         <div class="card">
             <h3>Number of Products</h3>                <br>
 
-            <p><?php echo number_format($product_count); ?></p>
+           <h3 ><?php echo $product_count; ?> Product<?php echo $product_count != 1 ? 's' : ''; ?></h3>
            
         </div>
         <div class="card">
